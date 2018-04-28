@@ -24,6 +24,40 @@ while getopts :a:1:2:t:U:r: TEST; do
     esac
 done 
 
+# help options
+if [ $# -eq 0 ];
+then
+	echo "+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Author: Zack Boyd																			|
+| ----------------------------------------------------															|
+|																					|
+| This script will take an input, raw fastq file, trim it using trim galore, or trimmomatic.										|
+|																					|
+| Trimmed fastq files are then assembled using [spades] / [iva] / [trinity] / [allpath] / [celera] / [abyss] / [vicuna] / [idba] / [velvet]				|
+| If multiple assemblers are to be used, they must be presented in a comma seperate list with no whitespace, e.g iva,idba,velvet,vicuna					|
+| 																					|
+| The contig files generated from assembling the reads are automatically analysed using quast.										|
+|	Note: If no reference file is specified the script will still run, but quast analysis will not occur.								|
+| 																					| 
+| 																					|
+| 																					|
+| Flags required for the script are as follows: 															|				
+| [-1] : First raw fastq file of a paired reads sample.															|
+| [-2] : Second raw fastq file of a paired reads sample.														|
+| 																					|
+| [-a] : Which aligner to use. Specified as [spades] / [iva] / [trinity] / [allpath] / [celera] / [abyss] / [vicuna] / [idba] / [velvet]				|					
+|		Multiple aligners specified as one string seperated by commas and no whitespace.									|
+|																					|
+| Optional flags for the script are as follows:																|
+| [-r] : A reference genome specified from root \"/\" or relative to home \"~/\"												|
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------+"
+	exit 1
+	
+
+fi
+
+
+
 #Get foldername
 foldername=${PWD##*/}
 pwd=`pwd`
@@ -39,7 +73,6 @@ then
 else
 	printf "\t${bold} Multiple Aligners Selected...\n${normal}"
 	IFS=',' read -a array <<< $OPT_A
-
 fi
 
 pathArray=()
@@ -138,12 +171,12 @@ fi
 #Aligner variables
 if [ -n $OPT_A ] && [ -z $array ]
 then
-	if [ "$OPT_A" = "spades" ] || [ "$OPT_A" = "iva" ] || [ "$OPT_A" = "trinity" ] || [ "$OPT_A" = "allpaths" ] || [ "$OPT_A" = "celera" ] || [ "$OPT_A" = "abyss" ] || [ "$OPT_A" = "vicuna" ] || [ "$OPT_A" = "idba" ] || [ "$OPT_A" = "test" ] 
+	if [ "$OPT_A" = "spades" ] || [ "$OPT_A" = "iva" ] || [ "$OPT_A" = "trinity" ] || [ "$OPT_A" = "allpaths" ] || [ "$OPT_A" = "celera" ] || [ "$OPT_A" = "abyss" ] || [ "$OPT_A" = "vicuna" ] || [ "$OPT_A" = "idba" ] || [ "$OPT_A" = "test" ] || [ "$OPT_A" = "velvet" ]
 	then
 		:	
 	else
 		echo "The spelling of your aligner looks wrong"
-		echo "Try [spades] / [iva] / [trinity] / [allpath] / [celera] / [abyss] / [vicuna] / [idba]"
+		echo "Try [spades] / [iva] / [trinity] / [allpath] / [celera] / [abyss] / [vicuna] / [idba] / [velvet]"
 		exit 1
 	fi
 fi
@@ -211,21 +244,33 @@ scriptrun(){
 		:	
 	fi
 }
-
 ##	Aligner work	##
 echo "Aligner: $OPT_A selected, running...."
 echo "Script run time being logged, check 'ScriptRunTime.txt' in output directories"
-
+#echo $OPT_A
+#printf '%s\n' "${array[@]}"
 #Testing stuff
-if [ $OPT_A = "test" ] 
+if [ $OPT_A = "test" ] || [[ " ${array[@]} " =~ " test " ]]
 then
-	echo "test aligner"	
+	echo "test in array"
+	if [[ " ${array[@]} " =~ " idba " ]]
+	then
+		echo "test and idba"
+		pathArray+="IDBAOutput/out/contig.fa"
+		echo "${pathArray[0]}"
+	fi
+	if [[ " ${array[@]} " =~ " iva " ]]
+	then
+		echo "test and idba and iva"
+		pathArray+=("IVAOutput/contigs.fa")
+	fi
+	echo "${pathArray[0]}"	
+	echo "${pathArray[1]}"
 else
-	:	
+	echo "no test in array"
 fi
-
 ##	Spades	##
-if [ $OPT_A = "spades" ] || [[ ${array["spades"]} ]]
+if [ $OPT_A = "spades" ] || [[ " ${array[@]} " =~ " spades "  ]]
 then
 	mkdir -p SpadesOutput
 	cd SpadesOutput	
@@ -237,9 +282,10 @@ then
 	cd ../
 
 	quastpath=SpadesOutput/contigs.fa
+	pathArray+=$quastpath
 fi
 ##	 IDBA	  ##
-if [ $OPT_A = "idba" ] || [[ ${array["idba"]} ]]
+if [ $OPT_A = "idba" ] || [[ " ${array[@]} " =~ " idba " ]]
 then
 	mkdir -p IDBAOutput
 	cd IDBAOutput
@@ -255,7 +301,7 @@ then
 	pathArray+=$quastpath
 fi
 #	Abyss
-if [ $OPT_A = "abyss" ] || [[ ${array["abyss"]} ]]
+if [ $OPT_A = "abyss" ] || [[ " ${array[@]} " =~ " abyss " ]]
 then
 	mkdir -p ABySSOutput
 	cd ABySSOutput
@@ -269,7 +315,7 @@ then
 fi
 
 # Celera
-if [ $OPT_A = "celera" ] || [[ ${array["celera"]} ]] 
+if [ $OPT_A = "celera" ] || [[ " ${array[@]} " =~ " celera " ]] 
 then
 	mkdir -p CeleraOutput
 	frgname=${PWD##*/}
@@ -289,7 +335,7 @@ then
 fi
 
 # VICUNA
-if [ $OPT_A = "vicuna" ] || [[ ${array["vicuna"]} ]]
+if [ $OPT_A = "vicuna" ] || [[ " ${array[@]} " =~ " vicuna " ]]
 then
 	mkdir -p VicunaOutput
 	currentpath=$pwd"/vicuna_config.txt"
@@ -305,17 +351,17 @@ then
 	ln -s ../$OPT_2 ./
 	
 	#Edit the config file, output: vicuna_edit_config.txt
-	EditVicunaConfig.py
+	 EditVicunaConfig.py
 
 	#Run assembler
 	scriptrun
-	time ~hugh01j/bin/VICUNA_v1.3/executable/vicuna-omp.static.linux64 vicuna_edit_config.txt
+	time ~hugh01j/bin/VICUNA_v1.3/executable/vicuna-omp.static.linux64 vicuna_config.txt
 	scriptrun
 	cd ../
 fi
 
 #IVA
-if [ $OPT_A = "iva" ] || [[ ${array["iva"]} ]] 
+if [ $OPT_A = "iva" ] || [[ " ${array[@]} " =~ " iva "  ]] 
 then
 	mkdir -p IVAOutput
 	cd IVAOutput
@@ -325,10 +371,11 @@ then
 	cd ../
 
 	quastpath=IVAOutput/contigs.fa
+	pathArray+=$quastpath
 
 fi
 #Allpaths-lg
-if [ $OPT_A = "allpaths" ] || [[ ${array["allpaths"]} ]] 
+if [ $OPT_A = "allpaths" ] || [[ " ${array[@]} " =~ " allpaths "  ]] 
 then	
 	#Make directories which allpaths needs
 	mkdir -p AllPathsOutput/${PWD##*/}/Data
@@ -356,6 +403,19 @@ then
 	cd ../
 	
 	quastpath=AllPathsOutput/${PWD##*/}/Data/run/ASSEMBLIES/small/final.contigs.fasta
+	pathArray+=$quastpath
+
+fi
+
+# Velvet
+if [ $OPT_A = "velvet" ] || [[ " ${array[@]} " =~ " velvet "  ]]
+then
+	echo "Running Velvet..."
+	echo $OPT_1
+	echo $OPT_2
+
+	time -p sh -c 'velveth ${PWD##*/}"_VelvetAssembly" 99 -shortPaired -fastq -separate '$OPT_1' '$OPT_2' ; velvetg ${PWD##*/}"_VelvetAssembly"'
+	quastpath=Mix-01_VelvetAssembly/contigs.fa
 
 fi
 
@@ -368,10 +428,12 @@ else
 	if [ -z $array ]
 	then
 		echo "${bold}Generating quast stats for one aligner specified${normal}"
-		mkdir -p QuastOutput
-		quast.py -o QuastOutput -R $OPT_R $quastpath
+		mkdir -p "QuastOutput_$OPT_A"
+		quast.py -o "QuastOutput_$OPT_A" -R $OPT_R $quastpath
 
 	else
+		#Finish this bit vvv
 		echo "${bold}Generating quast stats for $array ....${normal}"
+		quast.py -l $OPT_A -R OPT_R --reads1 $OPT_1 --reads2 $OPT_2
 	fi
 fi
