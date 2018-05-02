@@ -47,10 +47,7 @@ if (int(contigCount) * 2) != int(totalLines):
 else:
     copyfile(file, outfile)
     
-<<<<<<< HEAD
-=======
-    
->>>>>>> 93216996f4537b22b26b862564d3d9ba4ab5a4ce
+
 
 
 
