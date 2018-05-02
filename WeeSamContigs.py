@@ -3,8 +3,8 @@ import sys
 import csv
 import statistics
 
-file = sys.argv[1]
-genomeLength = int(sys.argv[2])
+file = sys.argv[1] 
+genomeLength = sys.argv[2]
 
 
 with open (file) as file:
@@ -15,6 +15,8 @@ with open (file) as file:
     longestContig = 0
     readsmapped = []
     refLength = []
+    contigbelow5 = 0
+    contigzero = 0
 
     for line in data:
         totalContigs += 1
@@ -22,6 +24,11 @@ with open (file) as file:
         readsmapped.append(toAppend)
         refAppend = line[1]
         refLength.append(refAppend)
+        if int(toAppend) <= 5:
+            contigbelow5 += 1
+        elif int(toAppend) == 0:
+            contigzero += 1
+
 
 
 
@@ -43,15 +50,16 @@ x = readsmapped[refLength.index(max(refLength))]
 
 #print("Reads mapped to longest contig:","\t",x)
 
-sys.stdout = open("WeeSamContig_stats.txt","w")
+
 readsmapped = sorted(readsmapped)
 
+sys.stdout = open("WeeSamContigs_Stats.txt","w")
+print("Total Number of reads Mapped"+","+"Reads Mapped to Longest Contig"+","+"Mean number of reads mapped"+","+"Median Number of Reads Mapped")
 
-print("\t","Total Number of reads Mapped","\t","Reads Mapped to Longest Contig","\t","Mean number of reads mapped","\t","Median Number of Reads Mapped","\t","Total Number of Contigs in File")
+print(str(sum(readsmapped))+","+str(x)+","+str(statistics.mean(readsmapped))+","+str(statistics.median(readsmapped)))
 
-print("\t",sum(readsmapped),"\t",x,"\t",statistics.mean(readsmapped),"\t",statistics.median(readsmapped),"\t",totalContigs)
+print("\n"+"Total Assembly length"+","+"N50"+","+"Genome Length"+","+"NG50")
 
-print("\n","\t","Total Assembly length","\t","N50","\t","Genome Length","\t","NG50")
 
 assemblyLength = sum(refLength)
 
@@ -77,13 +85,16 @@ for i in new:
 for i in new:
     ng50total += i
 
-    if ng50total > genomeLength / 2:
+    if ng50total > int(genomeLength) / 2:
         ng50list.append(i)
 
 
 
 
-print("\t",assemblyLength,"\t",n50list[0],"\t",genomeLength,"\t",ng50list[0])
+print(str(assemblyLength)+","+str(n50list[0])+","+str(genomeLength)+","+str(ng50list[0]))
+
+print("\n"+"Number of contigs with 5 or less reads mapped"+","+"Number of contigs with no reads mapped")
+print(str(contigbelow5)+","+str(contigzero))
 
 
 

@@ -61,7 +61,7 @@ pythContigs(){
 alignReads(){
 	mkdir -p BowtieIndexes
 	mkdir -p BowtieOutput
-	bowtie2-build contig*_oneline.fa BowtieIndexes/${PWD##*/}
+	bowtie2-build *contig*_oneline.fa BowtieIndexes/${PWD##*/}
 	bowtie2 -p 15 -x BowtieIndexes/${PWD##*/} -1 ../../$OPT_1 -2 ../../$OPT_2 -S BowtieOutput/${PWD##*/}"_aligned.sam" 2>&1 | tee ${PWD##*/}"_bowtie.stats"
 	refLen=$(awk '{print $2}' ../${pwd##*/}_weesam.stats | grep -v RefLength)
 	echo "!!!!! $refLen !!!!"
@@ -78,8 +78,15 @@ samtobam(){
 }
 
 weeSamStats(){
-	#Always call after bowtie method, need a variable
+	#Always call after bowtie method, need a variablei
+	echo "Running weesam with a ref length of $refLen"
 	WeeSamContigs.py BowtieOutput/${PWD##*/}"_weesam.stats" $refLen
+	mv WeeSamContigs_Stats.txt BowtieOutput/
+}
+
+blast(){
+	mkdir BlastOutput
+	blastn -query *contig*_oneline.fa -evalue 1e-5 -num_alignments 1 -num_threads 12 -db nt -out BlastOutput/${PWD##*/}_blast.txt
 }
 
 ##	Spades	##
@@ -92,6 +99,7 @@ then
 	alignReads
 	samtobam
 	weeSamStats
+	blast
 fi
 ##	 IDBA	  ##
 if [ $OPT_A = "idba" ]
@@ -103,6 +111,7 @@ then
 	alignReads
 	samtobam
 	weeSamStats
+	blast
 fi
 #	Abyss
 if [ $OPT_A = "abyss" ]
@@ -111,6 +120,10 @@ then
 	cd Alignment/ABySSContigs
 	refContig=$pwd/ABySSOutput/${pwd##*/}-contigs.fa
 	pythContigs
+	alignReads
+	samtobam
+	weeSamStats
+	blast
 fi
 
 #VICUNA
@@ -120,6 +133,10 @@ then
 	cd Alignment/VicunaContigs
 	refContig=$pwd/VicunaOutput/contig.fasta
 	pythContigs
+	alignReads
+	samtobam
+	weeSamStats
+	blast
 fi
 
 #IVA
@@ -127,8 +144,12 @@ if [ $OPT_A = "iva" ]
 then
 	mkdir -p Alignment/IVAContigs
 	cd Alignment/IVAContigs
-	refContig=$pwd/IVAOutput/contigs.fasta
+	refContig=$pwd/IVAOutput/contigs/contigs.fasta
 	pythContigs
+	alignReads
+	samtobam
+	weeSamStats
+	blast
 fi 
 
 # Velvet
@@ -138,5 +159,9 @@ then
 	cd Alignment/VelvetContigs
 	refContig=$pwd/${pwd##*/}_VelvetAssembly/contigs.fa
 	pythContigs
+	alignReads
+	samtobam
+	weeSamStats
+	blast
 fi
 

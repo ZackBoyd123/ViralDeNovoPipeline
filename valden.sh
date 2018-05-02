@@ -276,17 +276,18 @@ then
 	cd SpadesOutput	
 	scriptrun
 	cd ../
-	time python2 ~fawc01h/Documents/SPAdes-3.6.1-Linux/bin/spades.py -1 $OPT_1 -2 $OPT_2 -o SpadesOutput/
+	time python2 ~fawc01h/Documents/SPAdes-3.6.1-Linux/bin/spades.py --careful --cov-cutoff auto -1 $OPT_1 -2 $OPT_2 -k 77,99,127 -o SpadesOutput/
 	cd SpadesOutput
 	scriptrun
 	cd ../
 
 	quastpath=SpadesOutput/contigs.fa
-	pathArray+=$quastpath
+	pathArray+="($quastpath)"
 fi
 ##	 IDBA	  ##
 if [ $OPT_A = "idba" ] || [[ " ${array[@]} " =~ " idba " ]]
 then
+	echo "${bold} Begining IDBA analysis....${normal}"
 	mkdir -p IDBAOutput
 	cd IDBAOutput
 	scriptrun
@@ -298,7 +299,7 @@ then
 	cd ../
 
 	quastpath=IDBAOutput/out/contig.fa
-	pathArray+=$quastpath
+	pathArray+="($quastpath)"
 fi
 #	Abyss
 if [ $OPT_A = "abyss" ] || [[ " ${array[@]} " =~ " abyss " ]]
@@ -311,7 +312,7 @@ then
 	cd ../
 
 	quastpath=ABySSOutput/"${PWD##*/}-contigs.fa"
-	pathArray+=$quastpath
+	pathArray+="($quastpath)"
 fi
 
 # Celera
@@ -358,6 +359,8 @@ then
 	time ~hugh01j/bin/VICUNA_v1.3/executable/vicuna-omp.static.linux64 vicuna_config.txt
 	scriptrun
 	cd ../
+	quastpath=VicunaOutput/contig.fasta
+	pathArray+="($quastpath)"
 fi
 
 #IVA
@@ -371,7 +374,7 @@ then
 	cd ../
 
 	quastpath=IVAOutput/contigs.fa
-	pathArray+=$quastpath
+	pathArray+="($quastpath)"
 
 fi
 #Allpaths-lg
@@ -415,7 +418,8 @@ then
 	echo $OPT_2
 
 	time -p sh -c 'velveth ${PWD##*/}"_VelvetAssembly" 99 -shortPaired -fastq -separate '$OPT_1' '$OPT_2' ; velvetg ${PWD##*/}"_VelvetAssembly"'
-	quastpath=Mix-01_VelvetAssembly/contigs.fa
+	quastpath=${PWD##*/}_VelvetAssembly/contigs.fa
+	pathArray="($quastpath)"
 
 fi
 

@@ -143,4 +143,4 @@ rm -f Alignment/${PWD##*/}.sam
 
 samtools index Alignment/${PWD##*/}".bam" 
 
-weeSAMv1.3 -b Alignment/${PWD##*/}".bam" -out Alignment/${PWD##*/}"_weesam.stats
+weeSAMv1.3 -b Alignment/${PWD##*/}".bam" -out Alignment/${PWD##*/}"_weesam.stats"

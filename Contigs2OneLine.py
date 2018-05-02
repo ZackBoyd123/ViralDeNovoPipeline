@@ -47,7 +47,6 @@ if (int(contigCount) * 2) != int(totalLines):
 else:
     copyfile(file, outfile)
     
-    print("FASTA file good to go")
 
 
 
