@@ -76,6 +76,7 @@ else
 fi
 
 pathArray=()
+quastName=()
 
 ##	Check variables are in place before running script	##
 #Trimming variables
@@ -252,20 +253,29 @@ echo "Script run time being logged, check 'ScriptRunTime.txt' in output director
 #Testing stuff
 if [ $OPT_A = "test" ] || [[ " ${array[@]} " =~ " test " ]]
 then
+	testvar="IAMTESTVAR"
+	#var=""
 	echo "test in array"
-	if [[ " ${array[@]} " =~ " idba " ]]
+	if [[ " ${array[@]} " =~ " cat " ]]
 	then
 		echo "test and idba"
-		pathArray+="IDBAOutput/out/contig.fa"
+		pathArray+=("IDBAOutput/out/contig.fa")
+		quastName+=("IDBA")
 		echo "${pathArray[0]}"
+		echo "\"$OPT_A\" in array"
 	fi
-	if [[ " ${array[@]} " =~ " iva " ]]
+	if [[ " ${array[@]} " =~ " dog " ]]
 	then
 		echo "test and idba and iva"
 		pathArray+=("IVAOutput/contigs.fa")
+		quastName+=("IVA")
+	#	printf -v var "%s," "${quastName[@]}"
 	fi
-	echo "${pathArray[0]}"	
-	echo "${pathArray[1]}"
+	
+	#var=${var%,}
+	#echo "New quast thing $var"
+	#echo "Quast contigs ${pathArray[@]}"
+	#exit 1
 else
 	echo "no test in array"
 fi
@@ -282,7 +292,8 @@ then
 	cd ../
 
 	quastpath=SpadesOutput/contigs.fa
-	pathArray+="($quastpath)"
+	pathArray+=("$quastpath")
+	quastName+=("Spades")
 fi
 ##	 IDBA	  ##
 if [ $OPT_A = "idba" ] || [[ " ${array[@]} " =~ " idba " ]]
@@ -299,7 +310,8 @@ then
 	cd ../
 
 	quastpath=IDBAOutput/out/contig.fa
-	pathArray+="($quastpath)"
+	pathArray+=("$quastpath")
+	quastName+=("IDBA")
 fi
 #	Abyss
 if [ $OPT_A = "abyss" ] || [[ " ${array[@]} " =~ " abyss " ]]
@@ -312,7 +324,8 @@ then
 	cd ../
 
 	quastpath=ABySSOutput/"${PWD##*/}-contigs.fa"
-	pathArray+="($quastpath)"
+	pathArray+=("$quastpath")
+	quastName+=("ABySS")
 fi
 
 # Celera
@@ -360,7 +373,8 @@ then
 	scriptrun
 	cd ../
 	quastpath=VicunaOutput/contig.fasta
-	pathArray+="($quastpath)"
+	pathArray+=("$quastpath")
+	quastName+=("Vicuna")
 fi
 
 #IVA
@@ -372,9 +386,10 @@ then
 	time iva -f ../$OPT_1 -r ../$OPT_2 contigs
 	scriptrun
 	cd ../
-
+	echo "Finished in iva $(date)"
 	quastpath=IVAOutput/contigs.fa
-	pathArray+="($quastpath)"
+	pathArray+=("$quastpath")
+	quastName+=("IVA")
 
 fi
 #Allpaths-lg
@@ -419,7 +434,8 @@ then
 
 	time -p sh -c 'velveth ${PWD##*/}"_VelvetAssembly" 99 -shortPaired -fastq -separate '$OPT_1' '$OPT_2' ; velvetg ${PWD##*/}"_VelvetAssembly"'
 	quastpath=${PWD##*/}_VelvetAssembly/contigs.fa
-	pathArray="($quastpath)"
+	pathArray=("$quastpath")
+	quastName=("Velvet")
 
 fi
 
@@ -436,8 +452,16 @@ else
 		quast.py -o "QuastOutput_$OPT_A" -R $OPT_R $quastpath
 
 	else
+		var=""
+		printf -v var "%s, " "${quastName[@]}"
+		var=${var%, }
+		var=$(echo \"$var\")
+		list=$(echo ${pathArray[@]})
+
+		echo "Quast contigs ${pathArray[@]}"
 		#Finish this bit vvv
-		echo "${bold}Generating quast stats for $array ....${normal}"
-		quast.py -l $OPT_A -R OPT_R --reads1 $OPT_1 --reads2 $OPT_2
+		echo "${bold}Generating quast stats for $var ....${normal}"
+		echo "quast.py -l $var $list -R $OPT_R --reads1 $OPT_1 --reads2 $OPT_2"
+		quast.py -l $var $list -R $OPT_R --reads1 $OPT_1 --reads2 $OPT_2
 	fi
 fi

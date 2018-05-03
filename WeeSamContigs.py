@@ -93,8 +93,8 @@ for i in new:
 
 print(str(assemblyLength)+","+str(n50list[0])+","+str(genomeLength)+","+str(ng50list[0]))
 
-print("\n"+"Number of contigs with 5 or less reads mapped"+","+"Number of contigs with no reads mapped")
-print(str(contigbelow5)+","+str(contigzero))
+print("\n"+"Number of contigs with 5 or less reads mapped"+","+"Number of contigs with no reads mapped"+","+"Total number of contigs in file")
+print(str(contigbelow5)+","+str(contigzero)+","+str(totalContigs))
 
 
 

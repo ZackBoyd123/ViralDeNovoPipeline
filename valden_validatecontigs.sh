@@ -16,8 +16,14 @@ while getopts :a:1:2: TEST; do
 done
 #Get pwd for starting directory
 pwd=`pwd`
-
-
+substr=,
+if [ "${OPT_A/$substr}" = "$OPT_A" ] 
+then
+	:
+else
+	echo "Multiple Aligners Selected"
+	IFS=',' read -a array <<< $OPT_A
+fi
 #Check that both files are given to command line
 if [ -z $OPT_1 ] || [ -z $OPT_2 ] 
 then 
@@ -42,15 +48,17 @@ else
 	exit 1
 fi
 
-if [ "$OPT_A" = "spades" ] || [ "$OPT_A" = "iva" ] || [ "$OPT_A" = "trinity" ] || [ "$OPT_A" = "allpaths" ] || [ "$OPT_A" = "celera" ] || [ "$OPT_A" = "abyss" ] || [ "$OPT_A" = "vicuna" ] || [ "$OPT_A" = "idba" ] || [ "$OPT_A" = "test" ] || [ "$OPT_A" = "velvet" ]
-	then
-		:	
-	else
-		echo "The spelling of your aligner looks wrong"
-		echo "Try [spades] / [iva] / [trinity] / [allpath] / [celera] / [abyss] / [vicuna] / [idba] / [velvet]"
-		exit 1
-	fi
-
+if [ -n $OPT_A ] && [ -z $array ] 
+then
+	if [ "$OPT_A" = "spades" ] || [ "$OPT_A" = "iva" ] || [ "$OPT_A" = "trinity" ] || [ "$OPT_A" = "allpaths" ] || [ "$OPT_A" = "celera" ] || [ "$OPT_A" = "abyss" ] || [ "$OPT_A" = "vicuna" ] || [ "$OPT_A" = "idba" ] || [ "$OPT_A" = "test" ] || [ "$OPT_A" = "velvet" ]
+		then
+			:	
+		else
+			echo "The spelling of your aligner looks wrong"
+			echo "Try [spades] / [iva] / [trinity] / [allpath] / [celera] / [abyss] / [vicuna] / [idba] / [velvet]"
+			exit 1
+		fi
+fi
 pythContigs(){
 	Contigs2OneLine.py $refContig
 	echo ${refContig%.fa*}
@@ -63,7 +71,8 @@ alignReads(){
 	mkdir -p BowtieOutput
 	bowtie2-build *contig*_oneline.fa BowtieIndexes/${PWD##*/}
 	bowtie2 -p 15 -x BowtieIndexes/${PWD##*/} -1 ../../$OPT_1 -2 ../../$OPT_2 -S BowtieOutput/${PWD##*/}"_aligned.sam" 2>&1 | tee ${PWD##*/}"_bowtie.stats"
-	refLen=$(awk '{print $2}' ../${pwd##*/}_weesam.stats | grep -v RefLength)
+	refLen=$(cat ../${pwd##*/}_weesam.stats | grep -v RefLength | awk '{sum += $2} END {print sum}')
+	#refLen=$(awk '{print $2}' ../${pwd##*/}_weesam.stats | grep -v RefLength)
 	echo "!!!!! $refLen !!!!"
 }
 
@@ -75,6 +84,7 @@ samtobam(){
 	samtools index BowtieOutput/${PWD##*/}"_aligned.bam"
 
 	weeSAMv1.3 -b BowtieOutput/${PWD##*/}"_aligned.bam" -out BowtieOutput/${PWD##*/}"_weesam.stats"
+	echo "I finished sam2bam stuff at $(date)"
 }
 
 weeSamStats(){
@@ -82,16 +92,19 @@ weeSamStats(){
 	echo "Running weesam with a ref length of $refLen"
 	WeeSamContigs.py BowtieOutput/${PWD##*/}"_weesam.stats" $refLen
 	mv WeeSamContigs_Stats.txt BowtieOutput/
+	echo "I finished WeeSamstuff at $(date)"
 }
 
 blast(){
 	mkdir BlastOutput
 	blastn -query *contig*_oneline.fa -evalue 1e-5 -num_alignments 1 -num_threads 12 -db nt -out BlastOutput/${PWD##*/}_blast.txt
+	echo "I finished blast stuff at $(date)"
 }
 
 ##	Spades	##
-if [ $OPT_A = "spades" ]
+if [ $OPT_A = "spades" ] || [[ " ${array[@]} " =~ " spades "  ]]
 then
+	echo "I started in spades $(date)"
 	mkdir -p Alignment/SpadesContigs
 	cd Alignment/SpadesContigs
 	refContig=$pwd/SpadesOutput/contigs.fasta
@@ -100,10 +113,13 @@ then
 	samtobam
 	weeSamStats
 	blast
+	echo "I finished in spades at $(date)"
+	cd ../../
 fi
 ##	 IDBA	  ##
-if [ $OPT_A = "idba" ]
+if [ $OPT_A = "idba" ] || [[ " ${array[@]} " =~ " idba " ]]
 then
+	echo "I started in IDBA $(date)"
 	mkdir -p Alignment/IDBAContigs
 	cd Alignment/IDBAContigs
 	refContig=$pwd/IDBAOutput/contig.fa
@@ -112,10 +128,13 @@ then
 	samtobam
 	weeSamStats
 	blast
+	echo "I finished in IDBA $(date)"
+	cd ../../
 fi
 #	Abyss
-if [ $OPT_A = "abyss" ]
+if [ $OPT_A = "abyss" ] || [[ " ${array[@]} " =~ " abyss " ]]
 then
+	echo "I started in abyss $(date)"
 	mkdir -p Alignment/ABySSContigs
 	cd Alignment/ABySSContigs
 	refContig=$pwd/ABySSOutput/${pwd##*/}-contigs.fa
@@ -124,11 +143,14 @@ then
 	samtobam
 	weeSamStats
 	blast
+	echo "I finished in abyss $(date)"
+	cd ../../
 fi
 
 #VICUNA
 if [ $OPT_A = "vicuna" ]
 then
+	echo "I started in vicuna $(date)"
 	mkdir -p Alignment/VicunaContigs
 	cd Alignment/VicunaContigs
 	refContig=$pwd/VicunaOutput/contig.fasta
@@ -137,11 +159,14 @@ then
 	samtobam
 	weeSamStats
 	blast
+	echo "I finished in vicuna $(date)"
+	cd ../../
 fi
 
 #IVA
-if [ $OPT_A = "iva" ] 
+if [ $OPT_A = "iva" ] || [[ " ${array[@]} " =~ " iva "  ]]  
 then
+	echo "I started in iva $(date)"
 	mkdir -p Alignment/IVAContigs
 	cd Alignment/IVAContigs
 	refContig=$pwd/IVAOutput/contigs/contigs.fasta
@@ -150,11 +175,14 @@ then
 	samtobam
 	weeSamStats
 	blast
+	echo "I finished in iva $(date)"
+	cd ../../
 fi 
 
 # Velvet
-if [ $OPT_A = "velvet" ] 
+if [ $OPT_A = "velvet" ] || [[ " ${array[@]} " =~ " velvet "  ]]  
 then
+	echo "I started in velvet $(date)"
 	mkdir -p Alignment/VelvetContigs
 	cd Alignment/VelvetContigs
 	refContig=$pwd/${pwd##*/}_VelvetAssembly/contigs.fa
@@ -163,5 +191,7 @@ then
 	samtobam
 	weeSamStats
 	blast
+	echo "I finished in velvet $(date)"
+	cd ../../
 fi
 
