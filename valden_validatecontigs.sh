@@ -97,7 +97,7 @@ weeSamStats(){
 
 blast(){
 	mkdir BlastOutput
-	blastn -query *contig*_oneline.fa -evalue 1e-5 -num_alignments 1 -num_threads 12 -db nt -out BlastOutput/${PWD##*/}_blast.txt
+	blastn -query *contig*_oneline.fa -evalue 1e-5 -num_alignments 1 -num_threads 12 -db nt -out BlastOutput/${PWD##*/}_blast.txt --outfmt 6
 	echo "I finished blast stuff at $(date)"
 }
 
@@ -112,7 +112,7 @@ then
 	alignReads
 	samtobam
 	weeSamStats
-	blast
+	#blast
 	echo "I finished in spades at $(date)"
 	cd ../../
 fi
@@ -127,7 +127,7 @@ then
 	alignReads
 	samtobam
 	weeSamStats
-	blast
+	#blast
 	echo "I finished in IDBA $(date)"
 	cd ../../
 fi
@@ -142,7 +142,7 @@ then
 	alignReads
 	samtobam
 	weeSamStats
-	blast
+	#blast
 	echo "I finished in abyss $(date)"
 	cd ../../
 fi
@@ -158,7 +158,7 @@ then
 	alignReads
 	samtobam
 	weeSamStats
-	blast
+	#blast
 	echo "I finished in vicuna $(date)"
 	cd ../../
 fi
@@ -174,7 +174,7 @@ then
 	alignReads
 	samtobam
 	weeSamStats
-	blast
+	#blast
 	echo "I finished in iva $(date)"
 	cd ../../
 fi 
@@ -190,7 +190,7 @@ then
 	alignReads
 	samtobam
 	weeSamStats
-	blast
+	#blast
 	echo "I finished in velvet $(date)"
 	cd ../../
 fi

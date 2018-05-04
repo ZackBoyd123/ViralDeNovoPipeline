@@ -15,6 +15,7 @@ with open(sys.argv[1]) as file:
             seq.append(line)
 
     seq="".join(seq)
+    seq=seq.strip("\n")
     gcount = 0
     ccount = 0
     acount = 0
@@ -25,15 +26,15 @@ with open(sys.argv[1]) as file:
     for i in seq:
         total += 1
 
-        if i.startswith("G"):
+        if i == "G":
             gcount += 1
-        if i.startswith("C"):
+        if i == "C":
             ccount += 1
-        if i.startswith("T"):
+        if i == "T":
             tcount += 1
-        if i.startswith("A"):
+        if i == "A":
             acount += 1
-        if i.startswith("N"):
+        if i == "N":
             ncount += 1
 
 

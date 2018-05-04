@@ -284,9 +284,9 @@ if [ $OPT_A = "spades" ] || [[ " ${array[@]} " =~ " spades "  ]]
 then
 	mkdir -p SpadesOutput
 	cd SpadesOutput	
-	scriptrun
+	scriptrun	
 	cd ../
-	time python2 ~fawc01h/Documents/SPAdes-3.6.1-Linux/bin/spades.py --careful --cov-cutoff auto -1 $OPT_1 -2 $OPT_2 -k 77,99,127 -o SpadesOutput/
+	(time python2 ~fawc01h/Documents/SPAdes-3.6.1-Linux/bin/spades.py --careful --cov-cutoff auto -1 $OPT_1 -2 $OPT_2 -k 77,99,127 -o SpadesOutput/) 2>&1 | tee spades.log.txt
 	cd SpadesOutput
 	scriptrun
 	cd ../
@@ -304,7 +304,7 @@ then
 	scriptrun
 	cd ../
 	fq2fa --merge "$OPT_1" "$OPT_2" "idba.merged.fa"
-	time idba -r "idba.merged.fa" -o IDBAOutput/
+	(time idba -r "idba.merged.fa" -o IDBAOutput/) 2>&1 | tee idba.log.txt
 	cd IDBAOutput
 	scriptrun 
 	cd ../
@@ -319,7 +319,7 @@ then
 	mkdir -p ABySSOutput
 	cd ABySSOutput
 	scriptrun
-	time abyss-pe name="$foldername" k=96 in="../$OPT_1 ../$OPT_2"
+	(time abyss-pe name="$foldername" k=96 in="../$OPT_1 ../$OPT_2") 2>&1 | tee abyss.log.txt
 	scriptrun
 	cd ../
 
@@ -369,7 +369,7 @@ then
 
 	#Run assembler
 	scriptrun
-	time ~hugh01j/bin/VICUNA_v1.3/executable/vicuna-omp.static.linux64 vicuna_config.txt
+	(time ~hugh01j/bin/VICUNA_v1.3/executable/vicuna-omp.static.linux64 vicuna_config.txt) 2>&1 | tee vicuna.log.txt
 	scriptrun
 	cd ../
 	quastpath=VicunaOutput/contig.fasta
@@ -383,7 +383,7 @@ then
 	mkdir -p IVAOutput
 	cd IVAOutput
 	scriptrun
-	time iva -f ../$OPT_1 -r ../$OPT_2 contigs
+	(time iva -f ../$OPT_1 -r ../$OPT_2 contigs) 2>&1 | tee iva.log.txt
 	scriptrun
 	cd ../
 	echo "Finished in iva $(date)"
@@ -432,7 +432,7 @@ then
 	echo $OPT_1
 	echo $OPT_2
 
-	time -p sh -c 'velveth ${PWD##*/}"_VelvetAssembly" 99 -shortPaired -fastq -separate '$OPT_1' '$OPT_2' ; velvetg ${PWD##*/}"_VelvetAssembly"'
+	(time -p sh -c 'velveth ${PWD##*/}"_VelvetAssembly" 99 -shortPaired -fastq -separate '$OPT_1' '$OPT_2' ; velvetg ${PWD##*/}"_VelvetAssembly"') 2>&1 | tee velvet.log.txt
 	quastpath=${PWD##*/}_VelvetAssembly/contigs.fa
 	pathArray=("$quastpath")
 	quastName=("Velvet")
