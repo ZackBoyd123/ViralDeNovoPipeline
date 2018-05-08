@@ -81,7 +81,6 @@ for i in new:
 
     if total > halfAssembly:
         n50list.append(i)
-
 for i in new:
     ng50total += i
 

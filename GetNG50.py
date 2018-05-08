@@ -1,11 +1,11 @@
-#!/bin/python3
+#!/usr/bin/python3
 
 import sys
 import csv
 
 
 file = sys.argv[1]
-genomeLength = sys.argv[2]
+genomeLength = int(sys.argv[2])
 outfile = "UniqueContigsNG50.txt"
 
 
@@ -41,5 +41,7 @@ for i in totalLength:
         #print(i)
 
 sys.stdout = open(outfile,"w")
-print("NG50 total:"+"\t"+str(ng50Total[0]))
-
+try:
+    print("NG50 total:"+"\t"+str(ng50Total[0]))
+except IndexError:
+    print("NG50 total"+"\t"+"NA")

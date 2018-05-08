@@ -135,6 +135,7 @@ fi
 if [ -z $OPT_R ] 
 then
 	echo "No reference file given with [-r]"	
+	exit 1
 	printf "	${bold}!	Warning No reference specifed, script will still continue but QUAST analysis won't occur	!${normal}\n\n"
 
 else
@@ -329,24 +330,24 @@ then
 fi
 
 # Celera
-if [ $OPT_A = "celera" ] || [[ " ${array[@]} " =~ " celera " ]] 
-then
-	mkdir -p CeleraOutput
-	frgname=${PWD##*/}
-	cd CeleraOutput
-	scriptrun
-	
-	# Generate FRG files needed for celera assembly
-	fastqToCA -libraryname celera -insertsize 500 50 -technology illumina -mates "../$OPT_1","../$OPT_2" > "$frgname"".frg"
-	echo "FRG File generated"	
-
-	#Begin alignment
-	echo "Running celera aligner...."
-	time runCA -p "$frgnname" -d "CeleraRun" "$frgname"."frg"
-
-	scriptrun
-	cd ../
-fi
+#if [ $OPT_A = "celera" ] || [[ " ${array[@]} " =~ " celera " ]] 
+#then
+#	mkdir -p CeleraOutput
+#	frgname=${PWD##*/}
+#	cd CeleraOutput
+#	scriptrun
+#	
+#	# Generate FRG files needed for celera assembly
+#	fastqToCA -libraryname celera -insertsize 500 50 -technology illumina -mates "../$OPT_1","../$OPT_2" > "$frgname"".frg"
+#	echo "FRG File generated"	
+#
+#	#Begin alignment
+#	echo "Running celera aligner...."
+#	time runCA -p "$frgnname" -d "CeleraRun" "$frgname"."frg"
+#
+#	scriptrun
+#	cd ../
+#fi
 
 # VICUNA
 if [ $OPT_A = "vicuna" ] || [[ " ${array[@]} " =~ " vicuna " ]]
@@ -393,44 +394,44 @@ then
 
 fi
 #Allpaths-lg
-if [ $OPT_A = "allpaths" ] || [[ " ${array[@]} " =~ " allpaths "  ]] 
-then	
-	#Make directories which allpaths needs
-	mkdir -p AllPathsOutput/${PWD##*/}/Data
+#if [ $OPT_A = "allpaths" ] || [[ " ${array[@]} " =~ " allpaths "  ]] 
+#then	
+#	#Make directories which allpaths needs
+#	mkdir -p AllPathsOutput/${PWD##*/}/Data
+#
+#	#Generate in_groups.csv and in_libs.csv
+#	printf "group_name, library_name, file_name \n1, Illumina_1, $pwd"/"*.fastq \n2, Illumina_2, $pwd"/"*.fastq" > "in_groups.csv"
+#	printf "library_name, project_name, organism_name, type,paired, frag_size, frag_stddev, insert_size, insert_stddev, read_orientation, genomic_start, genomic_end \nIllumina_1, AllPaths, ${PWD##*/}, fragment, 1, 377, 137, , , inward, , \nIllumina_2, AllPaths, ${PWD##*/}, jumping, 1, , , 143, 15, outward, , " > "in_libs.csv"
+#
+#	#Move them to AllPathsOutput
+#	mv in_groups.csv AllPathsOutput
+#	mv in_libs.csv AllPathsOutput
+#	cd AllPathsOutput
+#
+#	#Get name of directory one above, which is the name of the folder created in AllPathsOutput
+#	allpathsname=`awk -F "/" '{print $(NF-1)}'<<< $PWD`
+#	
+#	#Prepare files for allpaths run
+#        PrepareAllPathsInputs.pl DATA_DIR=$PWD""/"$allpathsname" PICARD_TOOLS_DIR=/usr/bin/picard-tools PLOIDY=1
+#	cd $allpathsname
+#	mv frag_reads_orig.* jump_reads_orig.* ploidy Data/
+#	cd ../
+#
+#	#Run Allpaths
+#	RunAllPathsLG PRE=./ REFERENCE_NAME="$allpathsname" DATA_SUBDIR=Data RUN=run SUBDIR=small OVERWRITE=True VAPI_WARN_ONLY=True
+#	cd ../
+#	
+#	quastpath=AllPathsOutput/${PWD##*/}/Data/run/ASSEMBLIES/small/final.contigs.fasta
+#	pathArray+=$quastpath
 
-	#Generate in_groups.csv and in_libs.csv
-	printf "group_name, library_name, file_name \n1, Illumina_1, $pwd"/"*.fastq \n2, Illumina_2, $pwd"/"*.fastq" > "in_groups.csv"
-	printf "library_name, project_name, organism_name, type,paired, frag_size, frag_stddev, insert_size, insert_stddev, read_orientation, genomic_start, genomic_end \nIllumina_1, AllPaths, ${PWD##*/}, fragment, 1, 377, 137, , , inward, , \nIllumina_2, AllPaths, ${PWD##*/}, jumping, 1, , , 143, 15, outward, , " > "in_libs.csv"
-
-	#Move them to AllPathsOutput
-	mv in_groups.csv AllPathsOutput
-	mv in_libs.csv AllPathsOutput
-	cd AllPathsOutput
-
-	#Get name of directory one above, which is the name of the folder created in AllPathsOutput
-	allpathsname=`awk -F "/" '{print $(NF-1)}'<<< $PWD`
-	
-	#Prepare files for allpaths run
-        PrepareAllPathsInputs.pl DATA_DIR=$PWD""/"$allpathsname" PICARD_TOOLS_DIR=/usr/bin/picard-tools PLOIDY=1
-	cd $allpathsname
-	mv frag_reads_orig.* jump_reads_orig.* ploidy Data/
-	cd ../
-
-	#Run Allpaths
-	RunAllPathsLG PRE=./ REFERENCE_NAME="$allpathsname" DATA_SUBDIR=Data RUN=run SUBDIR=small OVERWRITE=True VAPI_WARN_ONLY=True
-	cd ../
-	
-	quastpath=AllPathsOutput/${PWD##*/}/Data/run/ASSEMBLIES/small/final.contigs.fasta
-	pathArray+=$quastpath
-
-fi
+#fi
 
 # Velvet
 if [ $OPT_A = "velvet" ] || [[ " ${array[@]} " =~ " velvet "  ]]
 then
 	echo "Running Velvet..."
-	echo $OPT_1
-	echo $OPT_2
+#	echo $OPT_1
+#	echo $OPT_2
 
 	(time -p sh -c 'velveth ${PWD##*/}"_VelvetAssembly" 99 -shortPaired -fastq -separate '$OPT_1' '$OPT_2' ; velvetg ${PWD##*/}"_VelvetAssembly"') 2>&1 | tee velvet.log.txt
 	quastpath=${PWD##*/}_VelvetAssembly/contigs.fa

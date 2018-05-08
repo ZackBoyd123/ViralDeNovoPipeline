@@ -1,6 +1,6 @@
 #!/bin/bash
 
-while getopts :a:1:2: TEST; do
+while getopts :a:1:2:r: TEST; do
   case $TEST in
 
     #Aligner
@@ -11,6 +11,8 @@ while getopts :a:1:2: TEST; do
     ;;
     #Paired Reads two
     2) OPT_2=$OPTARG
+    ;;
+    r) OPT_R=$OPTARG
     ;;
     esac
 done
@@ -89,7 +91,7 @@ samtobam(){
 
 weeSamStats(){
 	#Always call after bowtie method, need a variablei
-	echo "Running weesam with a ref length of $refLen"
+        refLen=$(cat ../${pwd##*/}_weesam.stats | grep -v RefLength | awk '{sum += $2} END {print sum}')
 	WeeSamContigs.py BowtieOutput/${PWD##*/}"_weesam.stats" $refLen
 	mv WeeSamContigs_Stats.txt BowtieOutput/
 	echo "I finished WeeSamstuff at $(date)"
@@ -97,7 +99,25 @@ weeSamStats(){
 
 blast(){
 	mkdir BlastOutput
-	blastn -query *contig*_oneline.fa -evalue 1e-5 -num_alignments 1 -num_threads 12 -db nt -out BlastOutput/${PWD##*/}_blast.txt --outfmt 6
+	blastdb=BlastDB
+	newblast=$(basename $OPT_R)
+	if [ -d ../"$blastdb" ]
+	then
+		echo "im in here"
+		:
+	else
+		mkdir -p ../$blastdb
+		echo "no blast ref db, making one now"
+		makeblastdb -in "$OPT_R" -out ../BlastDB/"$newblast" -dbtype nucl
+	fi
+	blastn -query *contig*_oneline.fa -evalue 1e-5 -num_alignments 1 -num_threads 12 -db ../BlastDB/"$newblast" -out BlastOutput/${PWD##*/}_blast2ref.txt -outfmt 6
+	sort -u -k1,1 BlastOutput/${PWD##*/}_blast2ref.txt > BlastOutput/${PWD##*/}_blast2ref_unique.txt
+	#refLen=$(cat ../${pwd##*/}_weesam.stats | grep -v RefLength | awk '{sum += $2} END {print sum}')
+	blastn -query *contig*_oneline.fa -evalue 1e-5 -num_alignments 1 -num_threads 12 -db nt -out BlastOutput/${PWD##*/}_blastHits.txt -outfmt 6
+	sort -u -k1,1 BlastOutput/${PWD##*/}_blastHits.txt > BlastOutput/${PWD##*/}_blastHits_unique.txt
+	mkdir -p ../TSV_Files
+	ConvertToTSV -1 BowtieOutput/WeeSamConitgs_Stats.txt -2 *contig*_oneline_stats.txt -3 BlastOutput/${PWD##*/}_blast2ref_unique.txt -4 BlastOutput/${PWD##*/}_blastHits_unique.txt
+	mv *.tsv ../TSV_Files
 	echo "I finished blast stuff at $(date)"
 }
 
@@ -108,11 +128,11 @@ then
 	mkdir -p Alignment/SpadesContigs
 	cd Alignment/SpadesContigs
 	refContig=$pwd/SpadesOutput/contigs.fasta
-	pythContigs
-	alignReads
-	samtobam
-	weeSamStats
-	#blast
+	#pythContigs
+	#alignReads
+	#samtobam
+	#weeSamStats
+	blast
 	echo "I finished in spades at $(date)"
 	cd ../../
 fi
@@ -127,7 +147,7 @@ then
 	alignReads
 	samtobam
 	weeSamStats
-	#blast
+	blast
 	echo "I finished in IDBA $(date)"
 	cd ../../
 fi
@@ -142,13 +162,13 @@ then
 	alignReads
 	samtobam
 	weeSamStats
-	#blast
+	blast
 	echo "I finished in abyss $(date)"
 	cd ../../
 fi
 
 #VICUNA
-if [ $OPT_A = "vicuna" ]
+if [ $OPT_A = "vicuna" ] || [[ " ${array[@]} " =~ " vicuna " ]]
 then
 	echo "I started in vicuna $(date)"
 	mkdir -p Alignment/VicunaContigs
@@ -158,7 +178,7 @@ then
 	alignReads
 	samtobam
 	weeSamStats
-	#blast
+	blast
 	echo "I finished in vicuna $(date)"
 	cd ../../
 fi
@@ -174,7 +194,7 @@ then
 	alignReads
 	samtobam
 	weeSamStats
-	#blast
+	blast
 	echo "I finished in iva $(date)"
 	cd ../../
 fi 
@@ -190,7 +210,7 @@ then
 	alignReads
 	samtobam
 	weeSamStats
-	#blast
+	blast
 	echo "I finished in velvet $(date)"
 	cd ../../
 fi
