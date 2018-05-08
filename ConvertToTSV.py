@@ -118,7 +118,7 @@ with open(blastHits) as f4:
         total += 1
 
 
-sys.stdout=open(suffix+"_data.tsv","w")
+sys.stdout=open(suffix+"_data.csv","w")
 #print("\t"+"Total # Contigs"+"\t"+"Longest Contig"+"\t"+"Contig < 300bp"+"\t"+"Total # Reads"+"\t"+"Total Mapped to longest contig"+"\t"+"Mean # mapped"+"\t"+"Median # mapped"+"\t"+"<5 mapped"+"\t"+"0 mapped"+"\t"+"Assembly Length"+"\t"+"N50"+"\t"+"NG50"+"\t"+"Contigs blast 2 ref"+"\t"+"Blast hits")
 #print(suffix,end="\t")
 #print(str(contigList)+"\t"+str(longContig)+"\t"+str(removed),end="\t")
