@@ -110,15 +110,15 @@ blast(){
 		echo "no blast ref db, making one now"
 		makeblastdb -in "$OPT_R" -out ../BlastDB/"$newblast" -dbtype nucl
 	fi
-	blastn -query *contig*_oneline.fa -evalue 1e-5 -num_alignments 1 -num_threads 12 -db ../BlastDB/"$newblast" -out BlastOutput/${PWD##*/}_blast2ref.txt -outfmt 6
+	blastn -query *contig*_oneline.fa -evalue 1e-5 -num_alignments 1 -num_threads 12 -db ../BlastDB/"$newblast" -out BlastOutput/${PWD##*/}_blast2ref.txt -outfmt "6 qseqid sseqid length qlen qstart qend sstart send mismatch gapopen evalue bitscore"
 	sort -u -k1,1 BlastOutput/${PWD##*/}_blast2ref.txt > BlastOutput/${PWD##*/}_blast2ref_unique.txt
 	#refLen=$(cat ../${pwd##*/}_weesam.stats | grep -v RefLength | awk '{sum += $2} END {print sum}')
-	blastn -query *contig*_oneline.fa -evalue 1e-5 -num_alignments 1 -num_threads 12 -db nt -out BlastOutput/${PWD##*/}_blastHits.txt -outfmt 6
-	sort -u -k1,1 BlastOutput/${PWD##*/}_blastHits.txt > BlastOutput/${PWD##*/}_blastHits_unique.txt
-	mkdir -p ../TSV_Files
-	ConvertToTSV -1 BowtieOutput/WeeSamConitgs_Stats.txt -2 *contig*_oneline_stats.txt -3 BlastOutput/${PWD##*/}_blast2ref_unique.txt -4 BlastOutput/${PWD##*/}_blastHits_unique.txt
-	mv *.tsv ../TSV_Files
-	echo "I finished blast stuff at $(date)"
+#	blastn -query *contig*_oneline.fa -evalue 1e-5 -num_alignments 1 -num_threads 12 -db nt -out BlastOutput/${PWD##*/}_blastHits.txt -outfmt 6
+#	sort -u -k1,1 BlastOutput/${PWD##*/}_blastHits.txt > BlastOutput/${PWD##*/}_blastHits_unique.txt
+#	mkdir -p ../TSV_Files
+#	ConvertToTSV -1 BowtieOutput/WeeSamConitgs_Stats.txt -2 *contig*_oneline_stats.txt -3 BlastOutput/${PWD##*/}_blast2ref_unique.txt -4 BlastOutput/${PWD##*/}_blastHits_unique.txt
+#	mv *.tsv ../TSV_Files
+#	echo "I finished blast stuff at $(date)"
 }
 
 ##	Spades	##
@@ -143,10 +143,10 @@ then
 	mkdir -p Alignment/IDBAContigs
 	cd Alignment/IDBAContigs
 	refContig=$pwd/IDBAOutput/contig.fa
-	pythContigs
-	alignReads
-	samtobam
-	weeSamStats
+	#pythContigs
+	#alignReads
+	#samtobam
+	#weeSamStats
 	blast
 	echo "I finished in IDBA $(date)"
 	cd ../../
@@ -158,10 +158,10 @@ then
 	mkdir -p Alignment/ABySSContigs
 	cd Alignment/ABySSContigs
 	refContig=$pwd/ABySSOutput/${pwd##*/}-contigs.fa
-	pythContigs
-	alignReads
-	samtobam
-	weeSamStats
+	#pythContigs
+	#alignReads
+	#samtobam
+	#weeSamStats
 	blast
 	echo "I finished in abyss $(date)"
 	cd ../../
@@ -174,10 +174,10 @@ then
 	mkdir -p Alignment/VicunaContigs
 	cd Alignment/VicunaContigs
 	refContig=$pwd/VicunaOutput/contig.fasta
-	pythContigs
-	alignReads
-	samtobam
-	weeSamStats
+	#pythContigs
+	#alignReads
+	#samtobam
+	#weeSamStats
 	blast
 	echo "I finished in vicuna $(date)"
 	cd ../../
@@ -190,10 +190,10 @@ then
 	mkdir -p Alignment/IVAContigs
 	cd Alignment/IVAContigs
 	refContig=$pwd/IVAOutput/contigs/contigs.fasta
-	pythContigs
-	alignReads
-	samtobam
-	weeSamStats
+	#pythContigs
+	#alignReads
+	#samtobam
+	#weeSamStats
 	blast
 	echo "I finished in iva $(date)"
 	cd ../../
@@ -206,10 +206,10 @@ then
 	mkdir -p Alignment/VelvetContigs
 	cd Alignment/VelvetContigs
 	refContig=$pwd/${pwd##*/}_VelvetAssembly/contigs.fa
-	pythContigs
-	alignReads
-	samtobam
-	weeSamStats
+	#pythContigs
+	#alignReads
+	#samtobam
+	#weeSamStats
 	blast
 	echo "I finished in velvet $(date)"
 	cd ../../
