@@ -35,7 +35,7 @@ with open(oldFile) as file:
             longestContig = l1
             longestLength = str(l2)
 
-    longestContig = longestContig.strip("\n")
+    longestContig = longestContig.replace("\n","")
 sys.stdout = original
 print("Longest contig in file:"+"\t"+"'"+longestContig+"'"+"\t"+"At length:"+"\t"+str(len(longestLength)))
 print("Total Contigs in File:",oldFile+"\t",totalContigs)
