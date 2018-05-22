@@ -180,7 +180,7 @@ fi
 #Aligner variables
 if [ -n $OPT_A ] && [ -z $array ]
 then
-	if [ "$OPT_A" = "spades" ] || [ "$OPT_A" = "iva" ] || [ "$OPT_A" = "trinity" ] || [ "$OPT_A" = "allpaths" ] || [ "$OPT_A" = "celera" ] || [ "$OPT_A" = "abyss" ] || [ "$OPT_A" = "vicuna" ] || [ "$OPT_A" = "idba" ] || [ "$OPT_A" = "test" ] || [ "$OPT_A" = "velvet" ]
+	if [ "$OPT_A" = "spades" ] || [ "$OPT_A" = "iva" ] || [ "$OPT_A" = "trinity" ] || [ "$OPT_A" = "allpaths" ] || [ "$OPT_A" = "celera" ] || [ "$OPT_A" = "abyss" ] || [ "$OPT_A" = "vicuna" ] || [ "$OPT_A" = "idba" ] || [ "$OPT_A" = "test" ] || [ "$OPT_A" = "velvet" ] || [ "$OPT_A" = "mira" ] || [ "$OPT_A" = "spadesnok" ]
 	then
 		:	
 	else
@@ -253,31 +253,35 @@ scriptrun(){
 		:	
 	fi
 }
-
-# Get Genome stats here.
-mkdir -p GenomeStats
-GenomeStats.py $OPT_R > GenomeStats/genomestats.txt
-mdust $OPT_R > GenomeStats/${PWD##*/}".dust.fasta"
-#python3 /home1/boyd01z/MScProjectWork/RunScripts/FixFasta.py ${PWD##*/}".dust.fasta"
-
-printf "!!!Stats After Dust!!!\n"
-cd GenomeStats
-GenomeStats.py ${pwd##*/}".dust.fasta" > genomestats_afterdust.txt
-cd ../
-########################
-
-# Get alignment stats here
-if [ ! -f Alignment/${PWD##*/}.bam ]
+#skipAlignment="True"
+if [ $skipAlignment == "True" ]
 then
-	mkdir -p Alignment
-	bowtie2 -p 15 -x BowtieIndexes/${PWD##*/} -1 $OPT_1 -2 $OPT_2 -S Alignment/${PWD##*/}".sam"
-	echo "Sorting sam file: Alignment/'${PWD##*/}'.sam"
-	samtools view -bS Alignment/${PWD##*/}".sam" | samtools sort -o Alignment/${PWD##*/}".bam"
-	rm -f Alignment/${PWD##*/}.sam
-	samtools index Alignment/${PWD##*/}".bam" 
-	weeSAMv1.3 -b Alignment/${PWD##*/}".bam" -out Alignment/${PWD##*/}"_weesam.stats"
-else
 	:
+else
+	# Get Genome stats here.
+	mkdir -p GenomeStats
+	GenomeStats.py -I $OPT_R > GenomeStats/$(basename $OPT_R)".stats.txt"
+	mdust $OPT_R > GenomeStats/$(basename $OPT_R)".dust.fasta"
+	repeat-match -n 50 GenomeStats/$(basename $OPT_R)".dust.fasta" > GenomeStats/$(basename $OPT_R)".repeat.fasta"
+	cd GenomeStats
+	GenomeStats.py -I $(basename $OPT_R)".dust.fasta" > $(basename $OPT_R)"genomestats_afterdust.txt"
+	cd ../
+	########################
+
+	# Get alignment stats here
+	if [ ! -f Alignment/${PWD##*/}.bam ]
+	then
+		mkdir -p Alignment
+		bowtie2 -p 15 -x BowtieIndexes/${PWD##*/} -1 $OPT_1 -2 $OPT_2 -S Alignment/${PWD##*/}".sam"
+		echo "Sorting sam file: Alignment/'${PWD##*/}'.sam"
+		samtools view -bS Alignment/${PWD##*/}".sam" | samtools sort -o Alignment/${PWD##*/}".bam"
+		rm -f Alignment/${PWD##*/}.sam
+		samtools index Alignment/${PWD##*/}".bam" 
+		samtools depth -d 1000000 Alignment/${PWD##*/}".bam" > Alignment/${PWD##*/}"_coverage.bam"
+		weeSAMv1.3 -b Alignment/${PWD##*/}".bam" -out Alignment/${PWD##*/}"_weesam.stats"
+	else
+		:
+	fi
 fi
 ########################
 
@@ -366,14 +370,11 @@ blast(){
 		echo "no blast ref db, making one now"
 		makeblastdb -in "$OPT_R" -out ../BlastDB/"$newblast" -dbtype nucl
 	fi
-	blastn -query *contig*_oneline.fa -evalue 1e-5 -num_alignments 1 -num_threads 12 -db ../BlastDB/"$newblast" -out BlastOutput/${PWD##*/}_blast2ref.txt -outfmt 6
+	blastn -query *contig*_oneline.fa -evalue 1e-5 -num_alignments 1 -num_threads 12 -db ../BlastDB/"$newblast" -out BlastOutput/${PWD##*/}_blast2ref.txt -outfmt "6 qseqid sseqid length qlen qstart qend sstart send mismatch gapopen evalue bitscore"
 	sort -u -k1,1 BlastOutput/${PWD##*/}_blast2ref.txt > BlastOutput/${PWD##*/}_blast2ref_unique.txt
 	#refLen=$(cat ../${pwd##*/}_weesam.stats | grep -v RefLength | awk '{sum += $2} END {print sum}')
 	blastn -query *contig*_oneline.fa -evalue 1e-5 -num_alignments 1 -num_threads 12 -db nt -out BlastOutput/${PWD##*/}_blastHits.txt -outfmt 6
 	sort -u -k1,1 BlastOutput/${PWD##*/}_blastHits.txt > BlastOutput/${PWD##*/}_blastHits_unique.txt
-	ConvertToTSV.py -1 BowtieOutput/WeeSamContigs_Stats.txt -2 *contig*_oneline_stats.txt -3 BlastOutput/${PWD##*/}_blast2ref_unique.txt -4 BlastOutput/${PWD##*/}_blastHits_unique.txt
-	tail -1 *.csv >> ../CSV_Files/All_data.csv
-	mv *.csv ../CSV_Files
 	echo "I finished blast stuff at $(date)"
 }
 
@@ -384,7 +385,37 @@ makecsv(){
 		echo ",Total#Contigs,Longest Contig,Contigs <300bp,Total#Reads,Total Mapped,Mean # Mapped,Median # Mapped,<5 Mapped,0 Mapped,Assembly Length,N50,NG50,Contigs blast 2 ref,Blast 1e-5 Hits" > ../CSV_Files/All_data.csv
 	else
 		:
-fi
+	fi
+
+	ConvertToTSV.py -1 BowtieOutput/WeeSamContigs_Stats.txt -2 *contig*_oneline_stats.txt -3 BlastOutput/${PWD##*/}_blast2ref_unique.txt -4 BlastOutput/${PWD##*/}_blastHits_unique.txt
+        tail -1 *.csv >> ../CSV_Files/All_data.csv
+	GenomeStats.py -I $OPT_R --repeats ../../GenomeStats/$(basename $OPT_R)".repeat.fasta" --coverage ../${pwd##*/}_coverage.bam --contig BlastOutput/${PWD##*/}_blast2ref.txt
+        mv *.csv ../CSV_Files
+
+}
+
+reaper(){
+	echo "marking duplicates"
+	newFold=${PWD##*/}
+	java -jar ~orto01r/programs/picard.jar MarkDuplicates I=BowtieOutput/${PWD##*/}_aligned.bam O=BowtieOutput/${PWD##*/}_dupes.bam M=BowtieOutput/dupe_stats.txt
+	echo "doing reapr"
+	mkdir -p REAPROutput
+	cd REAPROutput
+	echo "checking fasta..."
+	reapr facheck ../*contig*_oneline.fa new_assembly
+	reapr smaltmap -y 0.9 -s 2 -k 13 new_assembly.fa ../../../$OPT_1 ../../../$OPT_2 ../BowtieOutput/$newFold"_dupes.bam"
+	reapr pipeline new_assembly.fa ../BowtieOutput/$newFold"_dupes.bam" outdir 
+	cd ../
+}
+
+contents(){
+	pythContigs
+        alignReads
+        samtobam
+        weeSamStats
+        makecsv
+        blast
+        reaper
 }
 ##	Spades	##
 if [ $OPT_A = "spades" ] || [[ " ${array[@]} " =~ " spades "  ]]
@@ -393,6 +424,7 @@ then
 	cd SpadesOutput	
 	scriptrun	
 	cd ../
+	mkdir -p SpadesOutput
 	(time python2 ~fawc01h/Documents/SPAdes-3.6.1-Linux/bin/spades.py --careful --cov-cutoff auto -1 $OPT_1 -2 $OPT_2 -k 77,99,127 -o SpadesOutput/) 2>&1 | tee spades.log.txt
 	cd SpadesOutput
 	scriptrun
@@ -400,19 +432,29 @@ then
 	refContig=$pwd/SpadesOutput/contigs.fasta
 	mkdir -p Alignment/SpadesContigs
 	cd Alignment/SpadesContigs
-	pythContigs
-	alignReads
-	samtobam
-	weeSamStats
-	makecsv
-	blast
+	contents
 	echo "I finished in spades at $(date)"
 	cd ../../
 
-	quastpath=SpadesOutput/contigs.fa
+	quastpath=SpadesOutput/contigs.fasta
 	pathArray+=("$quastpath")
 	quastName+=("Spades")
 fi
+## Spades No K
+if [ $OPT_A = "spadesnok" ] || [[ " ${array[@]} " =~ " spadesnok " ]]
+then
+	mkdir -p SpadesOutputNoKMER
+        #(time python2 ~fawc01h/Documents/SPAdes-3.6.1-Linux/bin/spades.py -1 $OPT_1 -2 $OPT_2 -o SpadesOutput/) 2>&1 | tee spadesnok.log.txt
+	refContig=$pwd/SpadesOutputNoKMER/contigs.fasta
+	mkdir -p Alignment/SpadesOutputNoKMER
+	cd Alignment/SpadesOutputNoKMER
+	contents
+	echo "Finished in spades at $(date)"
+	quastpath=$refContig
+	pathArray+=("$quastpath")
+	quastName+=("SpadesNoK")
+fi
+
 ##	 IDBA	  ##
 if [ $OPT_A = "idba" ] || [[ " ${array[@]} " =~ " idba " ]]
 then
@@ -427,16 +469,12 @@ then
 	scriptrun 
 	cd ../
 	
-	refContig=$pwd/IDBAOutput/contig.fa
+	refContig=$pwd/IDBAOutput/contigs.fasta
 	mkdir -p Alignment/IDBAContigs
         cd Alignment/IDBAContigs
-        pythContigs
-        alignReads
-        samtobam
-        weeSamStats
-	makecsv
-        blast
+	contents
         echo "I finished in IDBA at $(date)"
+
         cd ../../
 
 
@@ -457,15 +495,11 @@ then
 	refContig=$pwd/ABySSOutput/${pwd##*/}-contigs.fa
 	mkdir -p Alignment/ABySSContigs
         cd Alignment/ABySSContigs
-        pythContigs
-        alignReads
-        samtobam
-        weeSamStats
-	makecsv
-        blast
+	contents
         echo "I finished in ABySS at $(date)"
-        cd ../../
 
+        cd ../../
+	
 
 	quastpath=ABySSOutput/"${PWD##*/}-contigs.fa"
 	pathArray+=("$quastpath")
@@ -481,7 +515,7 @@ fi
 #	scriptrun
 #	
 #	# Generate FRG files needed for celera assembly
-#	fastqToCA -libraryname celera -insertsize 500 50 -technology illumina -mates "../$OPT_1","../$OPT_2" > "$frgname"".frg"
+#	fastqToCA -libraryname celera -insertsize 350 50 -technology illumina -mates "../$OPT_1","../$OPT_2" > "$frgname"".frg"
 #	echo "FRG File generated"	
 #
 #	#Begin alignment
@@ -513,19 +547,14 @@ then
 
 	#Run assembler
 	scriptrun
-	(time ~hugh01j/bin/VICUNA_v1.3/executable/vicuna-omp.static.linux64 vicuna_config.txt) 2>&1 | tee vicuna.log.txt
+	(time OMP_NUM_THREADS=12 ~hugh01j/bin/VICUNA_v1.3/executable/vicuna-omp.static.linux64 vicuna_config.txt) 2>&1 | tee vicuna.log.txt
 	scriptrun
 	cd ../
 
 	refContig=$pwd/VicunaOutput/contig.fasta
 	mkdir -p Alignment/VicunaContigs
         cd Alignment/VicunaContigs
-        pythContigs
-        alignReads
-        samtobam
-        weeSamStats	
-	makecsv
-        blast
+	contents
         echo "I finished in Vicuna at $(date)"
         cd ../../
 
@@ -548,12 +577,7 @@ then
 	refContig=$pwd/IVAOutput/contigs/contigs.fasta
 	mkdir -p Alignment/IVAContigs
         cd Alignment/IVAContigs
-        pythContigs
-        alignReads
-        samtobam
-        weeSamStats
-	makecsv
-        blast
+	contents
         cd ../../
 
 
@@ -600,28 +624,44 @@ fi
 if [ $OPT_A = "velvet" ] || [[ " ${array[@]} " =~ " velvet "  ]]
 then
 	echo "Running Velvet..."
-#	echo $OPT_1
-#	echo $OPT_2
-
 	(time -p sh -c 'velveth ${PWD##*/}"_VelvetAssembly" 99 -shortPaired -fastq -separate '$OPT_1' '$OPT_2' ; velvetg ${PWD##*/}"_VelvetAssembly"') 2>&1 | tee velvet.log.txt
 
 	refContig=$pwd/${pwd##*/}_VelvetAssembly/contigs.fa
 	mkdir -p Alignment/VelvetContigs
         cd Alignment/VelvetContigs
-        pythContigs
-        alignReads
-        samtobam
-        weeSamStats
-	makecsv
-        blast
+	contents
         echo "I finished in spades at $(date)"
         cd ../../
 
 
 
 	quastpath=${PWD##*/}_VelvetAssembly/contigs.fa
-	pathArray=("$quastpath")
-	quastName=("Velvet")
+	pathArray+=("$quastpath")
+	quastName+=("Velvet")
+
+fi
+
+if [ $OPT_A = "mira" ] || [[ " ${array[@]} " =~ " mira " ]]
+then
+	ln -s $OPT_1 ${OPT_1%.fq}.fastq
+	ln -s $OPT_2 ${OPT_2%.fq}.fastq
+
+	printf "project = MIRA\njob = est,denovo,accurate\nparameters = -GE:not=15 -NW:cmrnl=warn SOLEXA_SETTINGS\n\nreadgroup = testgrp\ndata = *_val_*.fastq\ntechnology = solexa\n" > mira.manifest 
+	(time mira mira.manifest) 2>&1 | tee mira.log.txt
+	cd MIRA_assembly/MIRA_d_results
+	mv MIRA_out.unpadded.fasta contig.fa
+	refContig=$pwd/MIRA_assembly/MIRA_d_results/contig.fa
+	cd ../../
+	mkdir -p Alignment/MiraContigs
+	cd Alignment/MiraContigs
+	contents 
+
+	echo "Finised mira at: $(date)"
+	cd ../../
+
+	quastpath=MIRA_assembly/MIRA_d_results/contig.fa
+	pathArray+=("$quastpath")
+	quastName+=("Mira")
 
 fi
 
@@ -639,9 +679,10 @@ else
 
 	else
 		var=""
-		printf -v var "%s, " "${quastName[@]}"
+		printf -v var "%s," "${quastName[@]}"
 		var=${var%, }
-		var=$(echo \"$var\")
+		var=$(echo $var)
+		var=${var%,}
 		list=$(echo ${pathArray[@]})
 
 		echo "Quast contigs ${pathArray[@]}"
