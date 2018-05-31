@@ -254,17 +254,19 @@ scriptrun(){
 	fi
 }
 #skipAlignment="True"
-if [ $skipAlignment == "True" ]
+if [[ $skipAlignment == "True" ]]
 then
 	:
 else
+	out=$(basename $OPT_R)
+	out=${out%.fa*}
 	# Get Genome stats here.
 	mkdir -p GenomeStats
-	GenomeStats.py -I $OPT_R > GenomeStats/$(basename $OPT_R)".stats.txt"
-	mdust $OPT_R > GenomeStats/$(basename $OPT_R)".dust.fasta"
-	repeat-match -n 50 GenomeStats/$(basename $OPT_R)".dust.fasta" > GenomeStats/$(basename $OPT_R)".repeat.fasta"
+	GenomeStats.py -I $OPT_R > GenomeStats/$out".stats.txt"
+	mdust $OPT_R > GenomeStats/$out".dust.fasta"
+	repeat-match -n 50 GenomeStats/$out".dust.fasta" > GenomeStats/$out".repeat.fasta"
 	cd GenomeStats
-	GenomeStats.py -I $(basename $OPT_R)".dust.fasta" > $(basename $OPT_R)"genomestats_afterdust.txt"
+	GenomeStats.py -I $out".dust.fasta" > $out".genomestats_afterdust.txt"
 	cd ../
 	########################
 
@@ -444,7 +446,7 @@ fi
 if [ $OPT_A = "spadesnok" ] || [[ " ${array[@]} " =~ " spadesnok " ]]
 then
 	mkdir -p SpadesOutputNoKMER
-        #(time python2 ~fawc01h/Documents/SPAdes-3.6.1-Linux/bin/spades.py -1 $OPT_1 -2 $OPT_2 -o SpadesOutput/) 2>&1 | tee spadesnok.log.txt
+        (time python2 ~fawc01h/Documents/SPAdes-3.6.1-Linux/bin/spades.py -1 $OPT_1 -2 $OPT_2 -o SpadesOutputNoKMER/) 2>&1 | tee spadesnok.log.txt
 	refContig=$pwd/SpadesOutputNoKMER/contigs.fasta
 	mkdir -p Alignment/SpadesOutputNoKMER
 	cd Alignment/SpadesOutputNoKMER
@@ -543,7 +545,7 @@ then
 	ln -s ../$OPT_2 ./
 	
 	#Edit the config file, output: vicuna_edit_config.txt
-	 EditVicunaConfig.py
+	EditVicunaConfig.py
 
 	#Run assembler
 	scriptrun
@@ -582,7 +584,7 @@ then
 
 
 	echo "Finished in iva $(date)"
-	quastpath=IVAOutput/contigs/contigs.fa
+	quastpath=IVAOutput/contigs/contigs.fasta
 	pathArray+=("$quastpath")
 	quastName+=("IVA")
 
