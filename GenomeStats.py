@@ -5,6 +5,17 @@ import csv
 import argparse
 import glob
 
+#'''
+# This script is a bit of a beast. I didn't comment when i was going along so this description here should explain it. 
+# The script needs only one true input to run and thats the input fasta file. 
+# If the input fasta file contains any Ns some extra analysis gets done. 
+# The user can also specify tandems and repeats. If one of these are specified both need to be specified as well as a coverage file.
+# The script will parse all the data given and write it in an R format, ready to be used by the R scripts in the repo. 
+#
+# I have been using this script to compare multiple different assemblers so for my sanity I added the --multi-file this option.
+# This globs all txt files in the directory. So you must make sure that all txt files in the directory  are blast files from the pipeline. 
+#'''
+
 parser = argparse.ArgumentParser(description="Give me -I (--repeats,--coverage,--contig)")
 parser.add_argument("-I","--input", help= "Input fasta file for genome analysis. If this file was the result of mdust \
                                            some extra analyis will occur. This input file is required for all stages \
@@ -207,7 +218,7 @@ if goodtogo:
         f3.close()
 
     for i,j in enumerate(coveragelist):
-        if i % 200 == 0:
+        if i % 25 == 0:
             print("Coverage"+","+str(j[0])+","+str(j[1])+","+str(0)+","+str(0)+","+"CoveragePlot")
 
     #sys.stdout= sys.__stdout__
@@ -257,79 +268,106 @@ if multi_file:
         with open(filename) as file:
             data = csv.reader(file, delimiter="\t")
             for line in data:
-                list_of_contigs.append(line[1:8])
-    
-    
-        ymax = 1
-        ymin = 1
+                list_of_contigs.append(line[0:8])
+            file.close()
+
         reverse_list = []
         forward_list = []
         for i in list_of_contigs:
-    
-            i[5] = int(i[5])
+            ymax = 1
+            ymin = 1
             i[6] = int(i[6])
+            i[7] = int(i[7])
             if len(list_of_contigs) == 1:
-                i[0] = filename.split("_")[0].replace("Contigs", "")
-                suffix = i[0]
-                i[5] = str(i[5])
+                i[1] = filename.split("_")[0].replace("Contigs", "")
+                suffix = i[1]
                 i[6] = str(i[6])
-                if int(i[1]) == int(i[2]):
-                    i = i[5], i[6]
+                i[7] = str(i[7])
+                if int(i[2]) == int(i[3]):
+                    i = i[6], i[7]
                     print("PerfectAlignForward" + "," + ",".join(i) + "," + str(ymin) + "," + str(
                         ymax) + "," + "ContigPlot" + "," + str(suffix))
                     continue
                 else:
-                    i = i[5], i[6]
+                    i = i[6], i[7]
                     print("PartialAlignForward" + "," + ",".join(i) + "," + str(ymin) + "," + str(
                         ymax) + "," + "ContigPlot" + "," + str(suffix))
                     continue
-    
-            if i[5] >= i[6]:
+
+            if i[6] >= i[7]:
                 reverse_list.append(i)
             else:
                 forward_list.append(i)
-    
-    
-    
-        ymax = 1
-        ymin = 1
+
+
         misassembly_list = []
-        list_of_contigs.sort(key=lambda i: i[5])
-        for i in list_of_contigs:
-            i[0] = filename.split("_")[0].replace("Contigs", "")
-            suffix = i[0]
-            i[5] = str(i[5])
-            i[6] = str(i[6])
-    
-    
-            if int(i[1]) == int(i[2]):
-                i = i[5], i[6]
-                ymax += 1
-                ymin += 1
-                if int(i[0]) < int(i[1]):
-                    print("PerfectAlignForward" + "," + ",".join(i) + "," + str(ymin) + "," + str(ymax)
-                          + "," + "ContigPlot" + "," + str(suffix))
+#        list_of_contigs.sort(key=lambda i: i[6])
+        previous = next_ = None
+        ymin = 1
+        ymax = 1
+        if len(list_of_contigs) > 1:
+            for en, i in enumerate(list_of_contigs):
+
+                i[1] = filename.split("_")[0].replace("Contigs", "")
+                suffix = i[1]
+                i[6] = str(i[6])
+                i[7] = str(i[7])
+                if en > 0:
+                    previous = list_of_contigs[en - 1]
+                if en < (len(list_of_contigs)-1):
+                    next_ = list_of_contigs[en + 1]
+                if str(i[0]) == str(next_[0]):
+                    if int(i[2]) == int(i[3]):
+                        i = i[6], i[7]
+                        if int(i[0]) < int(i[1]):
+                            print("PerfectAlignForward" + "," + ",".join(i) + "," + str(ymin) + "," + str(ymax)
+                                  + "," + "ContigPlot" + "," + str(suffix))
+                        else:
+                            print("PerfectAlignReverse" + "," + ",".join(i) + "," + str(ymin) + "," + str(ymax)
+                                  + "," + "ContigPlot" + "," + str(suffix))
+                    else:
+                        misassembly_list.append(i)
                 else:
-                    print("PerfectAlignReverse" + "," + ",".join(i) + "," + str(ymin) + "," + str(ymax)
-                          + "," + "ContigPlot" + "," + str(suffix))
-            else:
-                misassembly_list.append(i)
-    
-        ymin += 1
-        ymax += 1
-        for i in misassembly_list:
-            ymin += 1
-            ymax += 1
-            i[0] = filename.split("_")[0].replace("Contigs", "")
-            suffix = i[0]
-            i[5] = str(i[5])
-            i[6] = str(i[6])
-            i = i[5], i[6]
-            if int(i[0]) < int(i[1]):
-    
-                print("PartialAlignForward" + "," + ",".join(i) + "," + str(ymin) + "," + str(ymax)
-                      + "," + "ContigPlot" + "," + str(suffix))
-            else:
-                print("PartialAlignReverse" + "," + ",".join(i) + "," + str(ymin) + "," + str(ymax)
-                      + "," + "ContigPlot" + "," + str(suffix))
+                    ymax += 1
+                    ymin += 1
+                    if int(i[2]) == int(i[3]):
+                        i = i[6], i[7]
+                        if int(i[0]) < int(i[1]):
+                            print("PerfectAlignForward" + "," + ",".join(i) + "," + str(ymin) + "," + str(ymax)
+                                  + "," + "ContigPlot" + "," + str(suffix))
+                        else:
+                            print("PerfectAlignReverse" + "," + ",".join(i) + "," + str(ymin) + "," + str(ymax)
+                                  + "," + "ContigPlot" + "," + str(suffix))
+                    else:
+                        misassembly_list.append(i)
+
+            for en, i in enumerate(misassembly_list):
+                if en > 0:
+                    previous = list_of_contigs[en - 1]
+                if en < (len(list_of_contigs)-1):
+                    next_ = list_of_contigs[en + 1]
+
+                i[1] = filename.split("_")[0].replace("Contigs", "")
+                suffix = i[1]
+                i[6] = str(i[6])
+                i[7] = str(i[7])
+                if str(i[0]) == str(next_[0]):
+                    i = i[6], i[7]
+                    if int(i[0]) < int(i[1]):
+                        print("PartialAlignForward" + "," + ",".join(i) + "," + str(ymin) + "," + str(ymax)
+                              + "," + "ContigPlot" + "," + str(suffix))
+                    else:
+                        print("PartialAlignReverse" + "," + ",".join(i) + "," + str(ymin) + "," + str(ymax)
+                              + "," + "ContigPlot" + "," + str(suffix))
+                else:
+                    ymin += 1
+                    ymax += 1
+                    i = i[6], i[7]
+                    if int(i[0]) < int(i[1]):
+                        print("PartialAlignForward" + "," + ",".join(i) + "," + str(ymin) + "," + str(ymax)
+                              + "," + "ContigPlot" + "," + str(suffix))
+                    else:
+                        print("PartialAlignReverse" + "," + ",".join(i) + "," + str(ymin) + "," + str(ymax)
+                              + "," + "ContigPlot" + "," + str(suffix))
+
 

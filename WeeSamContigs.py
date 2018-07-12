@@ -29,27 +29,12 @@ with open (file) as file:
         elif int(toAppend) == 0:
             contigzero += 1
 
-
-
-
-
-
-
-
 file.close()
 
 
 
 refLength = [int(i)for i in refLength]
-#Where in the list the longest contig occurs
-#print(refLength.index(max(refLength)))
-#Max contig length
-#print(max(refLength))
 readsmapped = [int(i)for i in readsmapped]
-x = readsmapped[refLength.index(max(refLength))]
-
-#print("Reads mapped to longest contig:","\t",x)
-
 
 readsmapped = sorted(readsmapped)
 
@@ -58,7 +43,7 @@ print("Total Number of reads Mapped"+","+"Reads Mapped to Longest Contig"+","+"M
 
 print(str(sum(readsmapped))+","+str(x)+","+str(statistics.mean(readsmapped))+","+str(statistics.median(readsmapped)))
 
-print("\n"+"Total Assembly length"+","+"N50"+","+"Genome Length"+","+"NG50")
+print("\n"+"Total Assembly length"+","+"N50"+","+"Genome Length"+","+"NG50"+","+"LG100")
 
 
 assemblyLength = sum(refLength)
@@ -73,6 +58,8 @@ total = 0
 ng50total = 0
 removeList=[]
 
+l100_total = 0
+l100list = []
 n50list = []
 ng50list = []
 
@@ -87,11 +74,19 @@ for i in new:
     if ng50total > int(genomeLength) / 2:
         ng50list.append(i)
 
-
-
-
-print(str(assemblyLength)+","+str(n50list[0])+","+str(genomeLength)+","+str(ng50list[0]))
-
+for i in new:
+    l100_total += i
+    l100list.append(i)
+    if l100_total >= int(genomeLength):
+        break
+try:
+    x=l100list[0]
+except IndexError:
+    x="0"
+else:
+    l100list = [i for i,x in enumerate(l100list)]
+    x = l100list[-1]+1    
+print(str(assemblyLength)+","+str(n50list[0])+","+str(genomeLength)+","+str(ng50list[0])+","+str(x))
 print("\n"+"Number of contigs with 5 or less reads mapped"+","+"Number of contigs with no reads mapped"+","+"Total number of contigs in file")
 print(str(contigbelow5)+","+str(contigzero)+","+str(totalContigs))
 
