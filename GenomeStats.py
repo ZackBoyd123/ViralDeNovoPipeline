@@ -25,7 +25,7 @@ parser.add_argument("--repeats", help="A file containing repeat coordinates on a
                                       containing coordianted where contigs blast to a reference.")
 parser.add_argument("--coverage", help="Coverage file containing a genome position and it's associated coverage")
 parser.add_argument("--contig",help="File containing coordinates where a contig blasts to your ref file")
-parser.add_argument("--multi-file",help="Multiple files with coords where contigs blast to ref file")
+parser.add_argument("--multi-file",help="Multiple files with coords where contigs blast to ref file", action="store_true")
 parser.add_argument("--tandems",help="File containing tandem repeats, produced by MUMMER")
 args = parser.parse_args()
 inputFasta = str(args.input)
@@ -34,11 +34,11 @@ input_tandems= ""
 inputRepeats = ""
 inputCoverage = ""
 inputContig = ""
-if args.multi_file == None:
+if args.multi_file == False:
     multi_file = False
 else:
     multi_file = True
-
+print(multi_file)
 if args.repeats == None:
     inputRepeats_exists = False
 else:
